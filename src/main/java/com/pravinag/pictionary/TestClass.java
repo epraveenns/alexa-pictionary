@@ -12,41 +12,11 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TestClass {
-    public static void main(String args[]) throws Exception {
-        Map<Character, Set<String>> sortedDictionary = getSortedDictionary();
-        Set<String> alreadyUsedWords = new HashSet<>(1000);
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestHandler;
 
-        System.out.println("Welcome. Start the game by entering any word");
-        String randomWord = null;
-        while (true) {
-            String inputWord = getInputWord();
-            char firstChar = inputWord.charAt(0);
-            Set<String> wordsStartingWithFirstChar = sortedDictionary.get(firstChar);
-            if (doesInputStartsWithPreviousRandomWord(firstChar, randomWord) && !alreadyUsedWords.contains(inputWord) && wordsStartingWithFirstChar.contains(inputWord)) {
-                alreadyUsedWords.add(inputWord);
-                char lastChar = inputWord.charAt(inputWord.length() - 1);
-                Set<String> wordsToChooseFrom = sortedDictionary.get(lastChar);
-                String[] wordsToChooseFromArray = wordsToChooseFrom.toArray(new String[0]);
-                int count = wordsToChooseFrom.size();
-                do {
-                    int randomNumber = ThreadLocalRandom.current().nextInt(0, wordsToChooseFrom.size());
-                    randomWord = wordsToChooseFromArray[randomNumber];
-                } while (alreadyUsedWords.contains(randomWord) && count-- > 0);
-
-                if (count < 0) {
-                    System.out.println("You Won");
-                    break;
-                } else
-                {
-                    alreadyUsedWords.add(randomWord);
-                    System.out.println(randomWord);
-                }
-            } else {
-                System.out.println("Invalid word");
-            }
-        }
-
+public class TestClass implements RequestHandler<Integer, String>{
+    public static void main(String args[]) {
     }
 
     private static boolean doesInputStartsWithPreviousRandomWord(char firstChar, String previousWord)
@@ -79,5 +49,48 @@ public class TestClass {
     private static BufferedReader getBufferedReader() throws FileNotFoundException {
         File file = new File("words_alpha.txt");
         return new BufferedReader(new FileReader(file));
+    }
+
+    @Override
+    public String handleRequest(Integer integer, Context context) {
+        Map<Character, Set<String>> sortedDictionary = null;
+        try {
+            sortedDictionary = getSortedDictionary();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Set<String> alreadyUsedWords = new HashSet<>(1000);
+
+        System.out.println("Welcome. Start the game by entering any word");
+        String randomWord = null;
+        while (true) {
+            String inputWord = getInputWord();
+            char firstChar = inputWord.charAt(0);
+            Set<String> wordsStartingWithFirstChar = sortedDictionary.get(firstChar);
+            if (doesInputStartsWithPreviousRandomWord(firstChar, randomWord) && !alreadyUsedWords.contains(inputWord) && wordsStartingWithFirstChar.contains(inputWord)) {
+                alreadyUsedWords.add(inputWord);
+                char lastChar = inputWord.charAt(inputWord.length() - 1);
+                Set<String> wordsToChooseFrom = sortedDictionary.get(lastChar);
+                String[] wordsToChooseFromArray = wordsToChooseFrom.toArray(new String[0]);
+                int count = wordsToChooseFrom.size();
+                do {
+                    int randomNumber = ThreadLocalRandom.current().nextInt(0, wordsToChooseFrom.size());
+                    randomWord = wordsToChooseFromArray[randomNumber];
+                } while (alreadyUsedWords.contains(randomWord) && count-- > 0);
+
+                if (count < 0) {
+                    System.out.println("You Won");
+                    break;
+                } else
+                {
+                    alreadyUsedWords.add(randomWord);
+                    System.out.println(randomWord);
+                }
+            } else {
+                System.out.println("Invalid word");
+                break;
+            }
+        }
+        return "Thank you";
     }
 }
